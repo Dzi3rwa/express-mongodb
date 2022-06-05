@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MongoDB</title>
+</head>
+
+
+<body>
+
+    <div class="header">
+        <h1 id="header">Mongo DB - cz 1 / połączono z :<span id="adres"></span></h1>
+        <button id="polacz" class="bt1">Połącz z serwerem MongoDB</button>
+    </div>
+    <div class="main">
+        <div class="left">
+            <div>
+                <h2 class="b">bieżąca baza: / <span id="wybor" class="blue">nie wybrano</span></h2>
+            </div>
+            <button id="dodajBaze" class="bt1">nowa baza danych</button>
+            <button id="usunBaze" class="bt2">usuń bieżącą</button>
+            <div class="bazy" id="bazy"></div>
+        </div>
+        <div class="right">
+            <div>
+                <h2 class="b">bieżąca kolekcja / <span id="wybor2" class="blue">nie wybrano</span></h2>
+            </div>
+            <button id="dodajKolekcje" class="bt1">nowa kolekcja</button>
+            <button id="usunKolekcje" class="bt2">usuń bieżącą</button>
+            <div class="kolekcje" id="kolekcje"></div>
+        </div>
+        <div class="right2">
+            <div>
+                <h2 class="b">dokumenty: / <span id="wybor3" class="blue"> nie wybrano </span> / <span id="wybor4"
+                        class="blue">nie
+                        wybrano</span></h2>
+            </div>
+            <button id="nowyDokument" class="bt1 wid">nowy dokument</button>
+            <div class="dokumenty u" id="dokumenty">Brak dokumentów w kolekcji</div>
+        </div>
+    </div>
+    <script>
+
+        window.onload = fetchPostPolacz()
+
+        function fetchPostPolacz() {
+            let ip = prompt("podaj", "grupa2:NS6M63mGpdfr45tg@SG-klasa3p-48609.servers.mongodirector.com:27017")//w szkole zmienić na 192.168.1.100
+            const body = JSON.stringify({ ip: ip })
+            const headers = { "Content-Type": "application/json" }
+            fetch("/", { method: "post", body, headers })
+                .then(response => response.json())
+                .then(
+                    data => {
+                        if (data.alert) {
+                            confirm(`połączenie z serwerem ${ip} nieudane, czy połączyć z MongoDB na localhost?`)
+                            let bazy = ""
+                            for (let i = 0; i < data.bazy.length; i++) {
+                                if (data.bazy[i].name == "admin" || data.bazy[i].name == "local" || data.bazy[i].name == "config")
+                                    continue
+                                else
+                                    bazy += `<div><button id="b" class="blue under" onclick="bazaDanych('${data.bazy[i].name}')">${data.bazy[i].name}</button></div>`
+                            }
+                            document.getElementById("bazy").innerHTML = bazy
+                            document.getElementById("header").innerHTML = "Mongo DB - cz 1 / połączono z : " + data.ip
+                        } else {
+                            let bazy = ""
+                            for (let i = 0; i < data.bazy.length; i++) {
+                                if (data.bazy[i].name == "admin" || data.bazy[i].name == "local" || data.bazy[i].name == "config")
+                                    continue
+                                else
+                                    bazy += `<div><button id="b" class="blue under" onclick="bazaDanych('${data.bazy[i].name}')">${data.bazy[i].name}</button></div>`
+                            }
+                            document.getElementById("bazy").innerHTML = bazy
+                            document.getElementById("header").innerHTML = "Mongo DB - cz 1 / połączono z : " + data.ip
+                        }
+                    }
+                )
+        }
+
+        function fetchPostDodajBaze() {
+            let nowaBaza = prompt("podaj nazwe bazy")
+            if (nowaBaza) {
+                const body = JSON.stringify({ nowaBaza: nowaBaza })
+                const headers = { "Content-Type": "application/json" }
+                fetch("/add", { method: "post", body, headers })
+                    .then(response => response.json())
+                    .then(
+                        data => {
+                            document.getElementById("bazy").innerHTML += `<div><button id="b" class="blue under" onclick="bazaDanych('${nowaBaza}')">${nowaBaza}</button></div>`
+                        }
+                    )
+            }
+
+        }
+
+
+        function fetchPostUsunBaze() {
+            let nazwaBazy = document.getElementById("wybor").innerHTML
+            let alert = confirm("Czy na pewno usunąć?")
+            if (alert) {
+                const body = JSON.stringify({ nazwaBazy: nazwaBazy })
+                const headers = { "Content-Type": "application/json" }
+                fetch("/delete", { method: "post", body, headers })
+                    .then(response => response.json())
+                    .then(
+                        data => {
+                            let bazy = ""
+                            for (let i = 0; i < data.length; i++) {
+                                if (data[i].name == "admin" || data[i].name == "local" || data[i].name == "config" || data[i].name == nazwaBazy)
+                                    continue
+                                else
+                                    bazy += `<div><button id="b" class="blue under" onclick="bazaDanych('${data[i].name}')">${data[i].name}</button></div>`
+                            }
+                            document.getElementById("bazy").innerHTML = bazy
+                            document.getElementById("wybor2").innerHTML = "nie wybrano"
+                            document.getElementById("kolekcje").innerHTML = ""
+                        }
+                    )
+            }
+        }
+
+        function fetchPostDodajKolekcje() {
+            let nazwaBazy = document.getElementById("wybor").innerHTML
+            let nowaKolekcja = prompt("podaj nazwe kolekcji")
+            if (nowaKolekcja) {
+                const body = JSON.stringify({ nazwaBazy: nazwaBazy, nowaKolekcja: nowaKolekcja })
+                const headers = { "Content-Type": "application/json" }
+                fetch("/addColl", { method: "post", body, headers })
+                    .then(response => response.json())
+                    .then(
+                        data => {
+                            document.getElementById("kolekcje").innerHTML += `<div><button id="b" class="blue under" onclick="kolekcja('${nowaKolekcja}')">${nowaKolekcja}</button></div>`
+                        }
+                    )
+            }
+        }
+
+
+        function fetchPostUsunKolekcje() {
+            let nazwaBazy = document.getElementById("wybor").innerHTML
+            let nazwaKolekcji = document.getElementById("wybor2").innerHTML
+            let alert = confirm("Czy na pewno usunąć?")
+            if (alert) {
+                const body = JSON.stringify({ nazwaBazy: nazwaBazy, nazwaKolekcji: nazwaKolekcji })
+                const headers = { "Content-Type": "application/json" }
+                fetch("/deleteColl", { method: "post", body, headers })
+                    .then(response => response.json())
+                    .then(
+                        data => {
+                            let bazy = ""
+                            for (let i = 0; i < data.length; i++) {
+                                if (data[i].name == nazwaKolekcji) {
+                                    continue
+                                } else {
+                                    bazy += `<div><button id="b" class="blue under" onclick="kolekcja('${data[i].name}')">${data[i].name}</button></div>`
+                                }
+                            }
+                            document.getElementById("kolekcje").innerHTML = bazy
+                        }
+                    )
+                let nie = "nie wybrano"
+                document.getElementById("wybor2").innerHTML = nie
+                document.getElementById("wybor4").innerHTML = nie
+                document.getElementById("dokumenty").innerHTML = ""
+            }
+        }
+
+
+        document.getElementById("dodajBaze").onclick = function () {
+            fetchPostDodajBaze()
+        }
+        document.getElementById("usunBaze").onclick = function () {
+            fetchPostUsunBaze()
+        }
+        document.getElementById("dodajKolekcje").onclick = function () {
+            fetchPostDodajKolekcje()
+        }
+        document.getElementById("usunKolekcje").onclick = function () {
+            fetchPostUsunKolekcje()
+        }
+        document.getElementById("polacz").onclick = function () {
+            fetchPostPolacz()
+        }
+
+        function bazaDanych(t) {
+            document.getElementById("wybor").innerHTML = t
+            document.getElementById("wybor3").innerHTML = t
+            let nazwaBazy = document.getElementById("wybor").innerHTML
+            const body = JSON.stringify({ nazwaBazy: nazwaBazy })
+            const headers = { "Content-Type": "application/json" }
+            fetch("/collections", { method: "post", body, headers })
+                .then(response => response.json())
+                .then(
+                    data => {
+                        let bazy = ""
+                        for (let i = 0; i < data.length; i++) {
+                            bazy += `<div><button id="b" class="blue under" onclick="kolekcja('${data[i].name}')">${data[i].name}</button></div>`
+                        }
+                        document.getElementById("kolekcje").innerHTML = bazy
+                    }
+                )
+        }
+
+        function formatujString(tekst) {
+            let string = "{"
+            for (let i = 0; i < tekst.length - 1; i++) {
+                if (tekst[i] == "{") {
+                    string += `</br><span style="color:blue;">`
+                } else if (tekst[i] == ",") {
+                    string += `,</br><span style="color:blue;">`
+                } else if (tekst[i] == "}") {
+                    continue
+                } else if (tekst[i] == ':') {
+                    string += `</span>:`
+                } else {
+                    string += tekst[i]
+                }
+            }
+
+            string += '</br>}'
+
+            return string
+        }
+
+
+        function formatujTekst(tekst) {
+            let t = ""
+            for (let i = 0; i < tekst.length; i++) {
+                if (tekst[i] == '"') {
+                    t += "-"
+                } else {
+                    t += tekst[i]
+                }
+            }
+            return t
+        }
+
+        function formatujTekst2(tekst) {
+            let t = '{'
+            for (let i = 34; i < tekst.length; i++) {
+                t += tekst[i]
+            }
+            return t
+        }
+
+        function isJson(item) {
+            item = typeof item !== "string" ? JSON.stringify(item) : item;
+
+            try {
+                item = JSON.parse(item);
+            } catch (e) {
+                return false;
+            }
+
+            if (typeof item === "object" && item !== null) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function kolekcja(t) {
+            document.getElementById("wybor2").innerHTML = t
+            document.getElementById("wybor4").innerHTML = t
+            let nazwaBazy = document.getElementById("wybor").innerHTML
+            let nazwaKolekcji = document.getElementById("wybor2").innerHTML
+            const body = JSON.stringify({ nazwaBazy: nazwaBazy, nazwaKolekcji: nazwaKolekcji })
+            const headers = { "Content-Type": "application/json" }
+            fetch("/dokumenty", { method: "post", body, headers })
+                .then(response => response.json())
+                .then(
+                    data => {
+                        console.log(data)
+                        let dokumenty = ""
+                        for (let i = 0; i < data.length; i++) {
+                            let t = formatujTekst(JSON.stringify(data[i]))
+                            let dokument = formatujString(JSON.stringify(data[i]))
+                            dokumenty += `<div class="dok">${dokument}</div>
+                                <div class="down"><button class="edytuj" id="edytuj" onclick="edytuj('${t}')">edytuj</button>
+                                <button class="usun" id="usun" onclick="usun('${data[i]._id}')">usun</button></div>`
+                        }
+                        let brak = `<span style="margin-top:0;" class="u">Brak dokumentów w kolekcji</span>`
+                        if (data.length == 0)
+                            document.getElementById("dokumenty").innerHTML = brak
+                        else
+                            document.getElementById("dokumenty").innerHTML = dokumenty
+                    }
+                )
+        }
+
+        document.getElementById("nowyDokument").onclick = function () {
+            document.getElementById("dokumenty").innerHTML = ""
+            let text = document.createTextNode("{}")
+            let text2 = document.createTextNode("zapisz nowy element")
+            let textarea = document.createElement("textarea")
+            let button = document.createElement("button")
+            let div2 = document.createElement("div")
+            textarea.classList.add("ta")
+            button.classList.add("green")
+            button.classList.add("wid2")
+            div2.classList.add("div2")
+            button.id = "dodajDokument"
+            textarea.id = "tekstDokumentu"
+            div2.id = "div2"
+            textarea.appendChild(text)
+            button.appendChild(text2)
+            let div = document.getElementById("dokumenty")
+            div.appendChild(textarea)
+            div.appendChild(button)
+            div.appendChild(div2)
+            let kod = ""
+            button.onclick = function () {
+                let nazwaBazy = document.getElementById("wybor3").innerHTML
+                let nazwaKolekcji = document.getElementById("wybor4").innerHTML
+                let tekstDokumentu = textarea.value
+                let isjson = isJson(tekstDokumentu)
+                if (isjson) {
+                    const body = JSON.stringify({ nazwaBazy: nazwaBazy, nazwaKolekcji: nazwaKolekcji, tekstDokumentu: tekstDokumentu })
+                    const headers = { "Content-Type": "application/json" }
+                    fetch("/dodajDokument", { method: "post", body, headers })
+                        .then(response => response.json())
+                        .then(
+                            data => {
+                                console.log(data)
+                                let dokumenty = ""
+                                for (let i = 0; i < data.length; i++) {
+                                    let t = formatujTekst(JSON.stringify(data[i]))
+                                    let dokument = formatujString(JSON.stringify(data[i]))
+                                    dokumenty += `<div class="dok">${dokument}</div>            
+                                    <div class="down"><button class="edytuj" id="edytuj" onclick="edytuj('${t}')">edytuj</button>
+                                    <button class="usun" id="usun" onclick="usun('${data[i]._id}')">usun</button></div>`
+                                }
+                                document.getElementById("dokumenty").innerHTML = dokumenty
+                            }
+                        )
+                } else {
+                    confirm("To nie jest JSON!")
+                }
+
+            }
+            div2.innerHTML = kod
+        }
+
+        function edytuj(tekst) {
+            let t = ""
+            for (let i = 0; i < tekst.length; i++) {
+                if (tekst[i] == "-") {
+                    t += '"'
+                } else {
+                    t += tekst[i]
+                }
+            }
+            let json = JSON.parse(t)
+            let id = json._id
+            document.getElementById("dokumenty").innerHTML = ""
+            let textarea = document.createElement("textarea")
+            let button1 = document.createElement("button")
+            let button2 = document.createElement("button")
+            let text1 = document.createTextNode("zapisz")
+            let text2 = document.createTextNode("anuluj")
+            let div2 = document.createElement("div")
+            textarea.classList.add("ta")
+            textarea.id = "tekstDokumentu"
+            textarea.innerHTML = t
+            let div = document.getElementById("dokumenty")
+            button1.classList.add("green")
+            button1.classList.add("wid3")
+            button2.classList.add("bt1")
+            button2.classList.add("wid3")
+            div2.classList.add("flex")
+            div2.appendChild(button1)
+            div2.appendChild(button2)
+            button1.appendChild(text1)
+            button2.appendChild(text2)
+            div.appendChild(textarea)
+            div.appendChild(div2)
+            button1.onclick = function () {
+                let nazwaBazy = document.getElementById("wybor").innerHTML
+                let nazwaKolekcji = document.getElementById("wybor2").innerHTML
+                let nowyTekst = textarea.value
+                let isjson = isJson(nowyTekst)
+                if (isjson) {
+                    nowyTekst = formatujTekst2(nowyTekst)
+                    console.log(nowyTekst)
+                    nowyTekst = JSON.parse(nowyTekst)
+                    const body = JSON.stringify({ nazwaBazy: nazwaBazy, nazwaKolekcji: nazwaKolekcji, nowyTekst: nowyTekst, id: id })
+                    const headers = { "Content-Type": "application/json" }
+                    fetch("/updateDokument", { method: "post", body, headers })
+                        .then(response => response.json())
+                        .then(
+                            data => {
+                                let dokumenty = ""
+                                for (let i = 0; i < data.length; i++) {
+                                    let t = formatujTekst(JSON.stringify(data[i]))
+                                    let dokument = formatujString(JSON.stringify(data[i]))
+                                    dokumenty += `<div class="dok">${dokument}</div>
+                                 <div class="down"><button class="edytuj" id="edytuj" onclick="edytuj('${t}')">edytuj</button>
+                                     <button class="usun" id="usun" onclick="usun('${data[i]._id}')">usun</button></div>`
+                                }
+                                document.getElementById("dokumenty").innerHTML = dokumenty
+                            }
+                        )
+                } else {
+                    confirm("To nie jest JSON!")
+                }
+            }
+            button2.onclick = function () {
+                let nazwaBazy = document.getElementById("wybor").innerHTML
+                let nazwaKolekcji = document.getElementById("wybor2").innerHTML
+                const body = JSON.stringify({ nazwaBazy: nazwaBazy, nazwaKolekcji: nazwaKolekcji })
+                const headers = { "Content-Type": "application/json" }
+                fetch("/dokumenty", { method: "post", body, headers })
+                    .then(response => response.json())
+                    .then(
+                        data => {
+                            let dokumenty = ""
+                            for (let i = 0; i < data.length; i++) {
+                                let t = formatujTekst(JSON.stringify(data[i]))
+                                let dokument = formatujString(JSON.stringify(data[i]))
+                                dokumenty += `<div class="dok">${dokument}</div>
+                                 <div class="down"><button class="edytuj" id="edytuj" onclick="edytuj('${t}')">edytuj</button>
+                                     <button class="usun" id="usun" onclick="usun('${data[i]._id}')">usun</button></div>`
+                            }
+                            let brak = `<span style="margin-top:0;" class="u">Brak dokumentów w kolekcji</span>`
+                            if (data.length == 0)
+                                document.getElementById("dokumenty").innerHTML = brak
+                            else
+                                document.getElementById("dokumenty").innerHTML = dokumenty
+                        }
+                    )
+            }
+        }
+
+        function usun(id) {
+            let nazwaBazy = document.getElementById("wybor").innerHTML
+            let nazwaKolekcji = document.getElementById("wybor2").innerHTML
+            let alert = confirm("Czy na pewno usunąć?")
+            if (alert) {
+                const body = JSON.stringify({ nazwaBazy: nazwaBazy, nazwaKolekcji: nazwaKolekcji, id: id })
+                const headers = { "Content-Type": "application/json" }
+                fetch("/deleteDokument", { method: "post", body, headers })
+                    .then(response => response.json())
+                    .then(
+                        data => {
+                            let dokumenty = ""
+                            for (let i = 0; i < data.length; i++) {
+                                let t = formatujTekst(JSON.stringify(data[i]))
+                                let dokument = formatujString(JSON.stringify(data[i]))
+                                dokumenty += `<div class="dok">${dokument}</div>
+                                        <div class="down"><button class="edytuj" id="edytuj" onclick="edytuj('${t}')">edytuj</button>
+                                        <button class="usun" id="usun" onclick="usun('${data[i]._id}')">usun</button></div>`
+                            }
+                            let brak = `<span style="margin-top:0;" class="u">Brak dokumentów w kolekcji</span>`
+                            if (data.length == 0)
+                                document.getElementById("dokumenty").innerHTML = brak
+                            else
+                                document.getElementById("dokumenty").innerHTML = dokumenty
+                        }
+                    )
+            }
+        }
+
+
+    </script>
+    <style>
+        .flex {
+            display: flex;
+        }
+
+        .wid3 {
+            width: 80px;
+        }
+
+        .dok {
+            color: black;
+            background-color: rgb(216, 216, 216);
+            padding: 20px;
+            width: 500px;
+            height: auto;
+            margin-bottom: 20px;
+            margin-top: 20px;
+        }
+
+        .edytuj {
+            background-color: green;
+            color: white;
+            border-radius: 10px;
+            padding: 5px;
+            margin-right: 50px;
+        }
+
+        .usun {
+            background-color: red;
+            color: white;
+            border-radius: 10px;
+            padding: 5px;
+            margin-right: 50px;
+        }
+
+        body {
+            margin: 0 auto;
+        }
+
+        textarea {
+            width: 600px;
+            height: 200px;
+            background-color: rgb(252, 121, 149);
+        }
+
+        .wid {
+            width: 120px;
+        }
+
+        .wid2 {
+            width: 150px;
+        }
+
+        .dokumenty {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .right2 {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .under {
+            text-decoration: underline;
+            border: none;
+            background-color: white;
+            margin-bottom: 10px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .header {
+            background-color: rgb(82, 82, 82);
+            color: white;
+            padding: 10px;
+            width: auto;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .main {
+            padding-top: 50px;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .blue {
+            color: blue;
+        }
+
+        .u {
+            font-size: 20px;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bold;
+            color: blue;
+            margin-top: 50px;
+        }
+
+        .b {
+            color: rgb(82, 82, 82);
+        }
+
+        .bt1 {
+            color: white;
+            background-color: blue;
+            border-radius: 10px;
+            padding: 5px;
+            margin-right: 50px;
+        }
+
+        .bt2 {
+            color: white;
+            background-color: red;
+            border-radius: 10px;
+            padding: 5px;
+        }
+
+        .bazy {
+            margin-top: 50px;
+            margin-left: 100px;
+        }
+
+        .kolekcje {
+            margin-top: 50px;
+        }
+
+        .ta {
+            font-size: 15px;
+        }
+
+        .green {
+            color: white;
+            background-color: green;
+            border-radius: 10px;
+            padding: 5px;
+            margin-right: 50px;
+        }
+    </style>
+</body>
+
+</html>
